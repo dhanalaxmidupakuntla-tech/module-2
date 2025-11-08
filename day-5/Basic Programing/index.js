@@ -13,4 +13,5 @@ function isPrime(num){
 let num = 5
 
 console.log(isPrime(num))
+
 console.log(evenOdd(num))
