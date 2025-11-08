@@ -6,12 +6,6 @@ function isPrime(num){
     return true;
 }
 
-function evenOdd(num) {
-    return num % 2 === 0
-}
-
-let num = 3
+let num = 5
 
 console.log(isPrime(num))
-console.log(evenOdd(num))
-
