@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L0 - Understanding and Navigating the DOM</title>
+</head>
+<body>
+    <h1 id="heading">This is heading</h1>
+    <p>This is paragraph 1</p>
+    <p>This is paragraph 2</p>
+    <p>This is paragraph 3</p>
+    <div class="container">
+        <p>This is div container.</p>
+    </div>
+</body>
+<script>
+    let title = document.getElementById("heading");
+    title.textContent = "Welcome to the DOM World!";
+
+    let paragraphs = document.getElementsByTagName("p");
+    for (let p of paragraphs){
+        p.style.color = "blue";
+    }
+
+    let containerDiv = document.querySelector(".container")
+    containerDiv.style.backgroundColor = "Yellow";
+</script>
+</html>

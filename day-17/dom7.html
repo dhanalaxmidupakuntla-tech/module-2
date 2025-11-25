@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <p class="item">Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid autem, totam reiciendis, laudantium repellendus laborum cupiditate molestias ab nemo eaque atque dolorem eos quisquam recusandae! Quisquam maxime aut minima officiis.</p>
+    <p class="item">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quae autem possimus nesciunt in dolor aut consequatur, iste incidunt odit quos saepe, iure tenetur, quas ipsa quo ut a eum similique!</p>
+    <p class="item">Lorem ipsum dolor sit amet consectetur adipisicing elit. Placeat atque culpa harum accusantium tenetur pariatur dignissimos commodi laboriosam et, non veritatis fugiat porro quaerat sed numquam doloremque voluptas dolore ex.</p>
+    <button onclick="changeColor()">Change Color All</button>
+</body>
+<script>
+    function changeColor(){
+        let itm = document.getElementsByClassName("item");
+        
+        for (let i=0; i < itm.length; i++){
+            itm[i].style.color = "blue";
+        }
+    }
+</script>
+</html>
