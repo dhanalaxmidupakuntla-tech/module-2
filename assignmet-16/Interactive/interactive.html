@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L1 - Interactive DOM Manipulation</title>
+    <style>
+        #box {
+            width: 300px;
+            height: 150px;
+            border: 2px solid black;
+            padding: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="colorInput" placeholder="Enter color name">
+    <button onclick="changeButton()" >Change Backgorund</button>
+    <br><br>
+
+    <input type="text" id="textInput" placeholder="Enter text to update">
+    <button onclick="updateText()">Update Text</button>
+    <br><br>
+
+    <div id="box">This is the default text inside the div.</div>
+</body>
+<script>
+    function isValidColor(color){
+        const vaild = new Option().style;
+        vaild.color = color;
+        return vaild.color !== "";
+    }
+
+    function changeButton(){
+        const color = document.getElementById("colorInput").value.trim();
+        const box = document.getElementById("box");
+
+        if (isValidColor(color)){
+            box.style.backgroundColor = color;
+        }
+        else{
+            alert("Invalid color name!")
+        }
+    }
+
+    function updateText(){
+        const text = document.getElementById("textInput").value.trim();
+        const box = document.getElementById("box");
+        if (text === ""){
+            alert("Please enter some text!")
+        }else{
+            box.textContent = text;
+        }
+    }
+</script>
+</html>

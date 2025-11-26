@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>L2 - Dynamic To-Do List</title>
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      padding: 24px;
+      max-width: 700px;
+      margin: 0 auto;
+      color: #111;
+    }
+
+    h1 { font-size: 1.25rem; margin-bottom: 12px; }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    #taskInput {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 8px 12px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #888;
+      background: #f6f6f6;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(.98); }
+
+    ul#tasks {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li.task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border: 1px solid #e6e6e6;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+
+    .task .text {
+      flex: 1;
+      word-break: break-word;
+      font-size: 15px;
+    }
+
+    .task.completed .text {
+      text-decoration: line-through;
+      color: #888;
+      opacity: 0.9;
+    }
+
+    .task .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .task button {
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    .sr-only {
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dynamic To-Do List</h1>
+
+  <div class="controls" role="group" aria-label="Add a new task">
+    <input id="taskInput" type="text" placeholder="Type a task and press Add or Enter" aria-label="Task input" />
+    <button id="addBtn" type="button">Add Task</button>
+  </div>
+
+  <ul id="tasks" aria-live="polite"></ul>
+
+  <script>
+    (function () {
+      const input = document.getElementById('taskInput');
+      const addBtn = document.getElementById('addBtn');
+      const tasksUl = document.getElementById('tasks');
+
+      function getSanitizedText(raw) {
+        if (!raw) return '';
+        return raw.replace(/\s+/g, ' ').trim();
+      }
+
+      function createTaskElement(text) {
+        const li = document.createElement('li');
+        li.className = 'task';
+        li.setAttribute('role', 'listitem');
+
+        const span = document.createElement('span');
+        span.className = 'text';
+        span.textContent = text;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        // Complete button (toggle)
+        const completeBtn = document.createElement('button');
+        completeBtn.type = 'button';
+        completeBtn.className = 'complete-btn';
+        completeBtn.setAttribute('aria-pressed', 'false');
+        completeBtn.title = 'Mark as complete';
+        completeBtn.textContent = 'Complete';
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.title = 'Delete task';
+        deleteBtn.textContent = 'Delete';
+
+        actions.appendChild(completeBtn);
+        actions.appendChild(deleteBtn);
+
+        li.appendChild(span);
+        li.appendChild(actions);
+
+        return li;
+      }
+
+      // Add task (public)
+      function addTask() {
+        const raw = input.value;
+        const text = getSanitizedText(raw);
+
+        if (!text) {
+          alert('Please enter a non-empty task.');
+          return;
+        }
+
+        // Optional: prevent excessively long tasks
+        if (text.length > 200) {
+          alert('Task is too long (max 200 characters).');
+          return;
+        }
+
+        const li = createTaskElement(text);
+        tasksUl.appendChild(li);
+
+        // clear input & focus for next entry
+        input.value = '';
+        input.focus();
+      }
+
+      // Event handlers via delegation
+      tasksUl.addEventListener('click', (ev) => {
+        const target = ev.target;
+        // Find the task <li>
+        const li = target.closest('li.task');
+        if (!li) return;
+
+        // Delete
+        if (target.classList.contains('delete-btn')) {
+          li.remove();
+          return;
+        }
+
+        // Complete toggle
+        if (target.classList.contains('complete-btn')) {
+          const isCompleted = li.classList.toggle('completed');
+          // Update aria-pressed for screen readers
+          target.setAttribute('aria-pressed', String(isCompleted));
+          target.textContent = isCompleted ? 'Undo' : 'Complete';
+          return;
+        }
+      });
+
+      // Add button click
+      addBtn.addEventListener('click', addTask);
+
+      // Support Enter key inside input
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          addTask();
+        }
+      });
+
+      // Optional: prevent accidental form submission if page later wrapped in a form
+      document.addEventListener('submit', (ev) => {
+        if (ev.target && ev.target.nodeName === 'FORM') {
+          ev.preventDefault();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

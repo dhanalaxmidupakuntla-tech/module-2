@@ -3,20 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L0 - Basic DOM Manipulation</title>
+    <title>DOM Manipulation</title>
+    <style>
+        .bold-blue {
+            font-weight: bold;
+            color: blue;
+        }
+
+        .italic-red {
+            font-style: italic;
+            color: red;
+        }
+    </style>
+
 </head>
 <body>
-    <ul id="habits">
-        <li>Eat</li>
-        <li>sleep</li>
-        <li>WakeUp</li>
+
+    <ul id="itemList">
+        <li>Item 1</li>
+        <li>Item 2</li>
+        <li>Item 3</li>
     </ul>
 
-    <button>Add Item</button>
+    <button id="addBtn">Add Item</button>
+
+    <script src="script.js"></script>
 </body>
 <script>
-    let list = document.querySelector("#habits")
-    let btn = document.querySelector("#addBtn")
+    const ul = document.querySelector("#itemList");
+    const btn = document.querySelector("#addBtn");
+
+    btn.addEventListener("click", function () {
+        const newLi = document.createElement("li");
+
+        // Count current li items
+        const count = ul.children.length + 1;
+        newLi.textContent = "New Item " + count;
+
+        // Apply styles based on odd/even
+        if (count % 2 === 1) {
+            newLi.classList.add("bold-blue");
+        } else {
+            newLi.classList.add("italic-red");
+        }
+
+        ul.appendChild(newLi);
+    });
 
 </script>
 </html>
