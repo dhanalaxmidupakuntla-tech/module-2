@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - Book Management</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:#0f172a;
+      background:var(--bg);padding:24px;
+    }
+
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;
+    }
+    header h2{margin:0;font-size:1.25rem}
+    .nav-links a{ margin-left:10px;text-decoration:none;color:var(--accent);font-weight:600;}
+
+    .container{
+      max-width:1100px;margin:0 auto;
+    }
+
+    .panel{
+      background:var(--card);padding:16px;border-radius:10px;box-shadow:0 8px 20px rgba(12,15,30,0.06);
+      margin-bottom:16px;
+    }
+
+    form.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    form .field{display:flex;flex-direction:column;flex:1;min-width:160px}
+    label{font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="text"], select{
+      padding:8px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:14px;
+    }
+    button.primary{
+      background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600;
+    }
+    .controls{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+
+    .grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;
+    }
+
+    .card-book{
+      background:#fff;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;
+      box-shadow:0 8px 20px rgba(12,15,30,0.06);height:100%;
+    }
+    .card-book img{width:100%;height:220px;object-fit:cover;border-radius:6px}
+    .meta{display:flex;flex-direction:column;gap:4px}
+    .meta .title{font-weight:700}
+    .meta .author{font-size:13px;color:var(--muted)}
+    .meta .category{font-size:12px;color:#0ea5a4;font-weight:600}
+
+    .actions{display:flex;gap:8px;margin-top:auto}
+    .btn{padding:8px 10px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+    .btn.danger{background:#fee2e2;border-color:#fecaca;color:#b91c1c}
+    .btn.small{padding:6px 8px;font-size:13px}
+
+    .empty{padding:20px;text-align:center;color:var(--muted);background:#fff;border-radius:10px}
+    @media (max-width:520px){ .grid{grid-template-columns:repeat(1,1fr)} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h2>Book Management (Admin)</h2>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+      </div>
+    </header>
+
+    <section class="panel" aria-labelledby="add-book-heading">
+      <h3 id="add-book-heading">Add Book</h3>
+      <form id="bookForm" class="row" onsubmit="return false;">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" type="text" placeholder="Book title" />
+        </div>
+
+        <div class="field">
+          <label for="author">Author</label>
+          <input id="author" type="text" placeholder="Author name" />
+        </div>
+
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="Fiction">Fiction</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Technical">Technical</option>
+          </select>
+        </div>
+
+        <div style="display:flex;align-items:flex-end">
+          <button class="primary" onclick="onAddBook()">Add Book</button>
+        </div>
+      </form>
+
+      <div class="controls" style="margin-top:14px">
+        <label style="font-size:13px;color:#374151">Sort:</label>
+        <button class="btn small" id="sortBtn" onclick="onToggleSort()">Sort A → Z</button>
+
+        <label style="font-size:13px;color:#374151;margin-left:10px">Filter:</label>
+        <select id="filter" title="fiter" onchange="onFilterChange()">
+          <option value="All">All</option>
+          <option value="Fiction">Fiction</option>
+          <option value="Comedy">Comedy</option>
+          <option value="Technical">Technical</option>
+        </select>
+
+        <button class="btn small" onclick="onClearAll()" title="Clear all books">Clear All</button>
+      </div>
+    </section>
+
+    <section id="booksSection">
+      <div id="booksGrid" class="grid"></div>
+      <div id="emptyState" class="empty" style="display:none;margin-top:12px">
+        No books to show. Add some using the form above.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ======= Data & constants =======
+    const STORAGE_KEY = 'domBookApp_books_v1';
+    const DEFAULT_IMAGE = 'https://m.media-amazon.com/images/I/71ZB18P3inL._SY522_.jpg';
+
+    // books array, sort state and filter state
+    let books = [];
+    let sortAsc = true; // true => A -> Z, false => Z -> A
+    let currentFilter = 'All';
+
+    // ======= Utilities =======
+    function loadBooksFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        books = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        books = [];
+      }
+    }
+
+    function saveBooksToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+    }
+
+    function sanitizeText(s){
+      return (s || '').replace(/\s+/g,' ').trim();
+    }
+
+    // ======= Render =======
+    function renderBooks() {
+      const grid = document.getElementById('booksGrid');
+      grid.innerHTML = '';
+
+      // apply filter
+      const filtered = books.filter(b => currentFilter === 'All' ? true : b.category === currentFilter);
+
+      // apply sort
+      filtered.sort((a,b) => {
+        const ta = a.title.toLowerCase();
+        const tb = b.title.toLowerCase();
+        if (ta < tb) return sortAsc ? -1 : 1;
+        if (ta > tb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById('emptyState').style.display = '';
+      } else {
+        document.getElementById('emptyState').style.display = 'none';
+      }
+
+      filtered.forEach((book, idx) => {
+        // create card
+        const card = document.createElement('article');
+        card.className = 'card-book';
+        card.innerHTML = `
+          <img src="${book.imageUrl}" alt="${escapeHtml(book.title)} cover" />
+          <div class="meta">
+            <div class="title">${escapeHtml(book.title)}</div>
+            <div class="author">by ${escapeHtml(book.author)}</div>
+            <div class="category">${escapeHtml(book.category)}</div>
+          </div>
+          <div class="actions">
+            <button class="btn small" onclick="onDeleteBook(${book.id})">Delete</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Small helper to escape HTML when inserting via template strings
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ======= Actions =======
+    function onAddBook() {
+      const title = sanitizeText(document.getElementById('title').value);
+      const author = sanitizeText(document.getElementById('author').value);
+      const category = document.getElementById('category').value;
+
+      if (!title) {
+        alert('Please enter the book title.');
+        return;
+      }
+      if (!author) {
+        alert('Please enter the author name.');
+        return;
+      }
+
+      // Book object with unique ID
+      const book = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        title,
+        author,
+        category,
+        imageUrl: DEFAULT_IMAGE
+      };
+
+      books.push(book);
+      saveBooksToStorage();
+      renderBooks();
+
+      // clear form
+      document.getElementById('title').value = '';
+      document.getElementById('author').value = '';
+      document.getElementById('title').focus();
+    }
+
+    function onDeleteBook(id) {
+      if (!confirm('Delete this book?')) return;
+      books = books.filter(b => b.id !== id);
+      saveBooksToStorage();
+      renderBooks();
+    }
+
+    function onToggleSort() {
+      sortAsc = !sortAsc;
+      const btn = document.getElementById('sortBtn');
+      btn.textContent = sortAsc ? 'Sort A → Z' : 'Sort Z → A';
+      renderBooks();
+    }
+
+    function onFilterChange() {
+      const sel = document.getElementById('filter');
+      currentFilter = sel.value;
+      renderBooks();
+    }
+
+    function onClearAll() {
+      if (!confirm('Clear all books?')) return;
+      books = [];
+      saveBooksToStorage();
+      renderBooks();
+    }
+
+    // ======= Init =======
+    function init() {
+      loadBooksFromStorage();
+      renderBooks();
+
+      // initialize sort button label and filter value from current states
+      document.getElementById('sortBtn').textContent = sortAsc ? 'Sort A → Z' : 'Sort Z → A';
+      document.getElementById('filter').value = currentFilter;
+    }
+
+    // Run init on page load
+    init();
+  </script>
+</body>
+</html>
