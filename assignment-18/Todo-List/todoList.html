@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>L1 - Enhanced Todo List</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --muted:#64748b; --accent:#0ea5a4; --danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background:var(--bg); color:#0f172a; padding:20px; min-height:100vh;
+      display:flex; align-items:flex-start; justify-content:center;
+    }
+    .app {
+      width:100%; max-width:760px;
+    }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;}
+    header h1{ margin:0; font-size:1.25rem; }
+    .panel { background:var(--card); padding:14px; border-radius:10px; box-shadow:0 8px 20px rgba(12,15,30,0.06); }
+
+    .controls { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    input[type="text"], .search {
+      padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0; font-size:15px; flex:1;
+    }
+    button.primary {
+      background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;
+    }
+    button.ghost { background:#fff; border:1px solid #e2e8f0; padding:8px 10px; border-radius:8px; cursor:pointer; }
+
+    .stats { margin:10px 0; color:var(--muted); font-size:14px; }
+
+    ul#todoList {
+      list-style:none; padding:0; margin:0; display:grid; gap:8px;
+    }
+
+    li.task {
+      display:flex; gap:10px; align-items:center; padding:10px; border-radius:8px;
+      border:1px solid #eef2f6; background:#fff;
+    }
+    .task .text { flex:1; word-break:break-word; font-size:15px; }
+    .task.completed .text { text-decoration:line-through; color:#6b7280; opacity:0.9; }
+
+    .actions { display:flex; gap:8px; align-items:center; }
+    .btn { padding:6px 8px; border-radius:8px; border:1px solid #e2e8f0; background:#fff; cursor:pointer; font-size:13px; }
+    .btn.delete { background:#fee2e2; border-color:#fecaca; color:var(--danger); }
+
+    .empty { text-align:center; color:var(--muted); padding:14px; border-radius:8px; background:#fff; border:1px dashed #e6edf3; }
+
+    @media (max-width:520px){
+      header{ flex-direction:column; align-items:flex-start; gap:8px; }
+      .controls{ flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Enhanced Todo List</h1>
+    </header>
+
+    <section class="panel" aria-labelledby="add-heading">
+      <h2 id="add-heading" style="margin:0 0 10px;font-size:16px">Add Task</h2>
+
+      <!-- Add task controls -->
+      <div class="controls">
+        <input id="taskInput" type="text" placeholder="Enter a new task (press Enter or click Add)" aria-label="Task input">
+        <button class="primary" id="addBtn" type="button">Add</button>
+        <button class="ghost" id="clearCompletedBtn" type="button">Clear Completed</button>
+      </div>
+
+      <!-- Search and stats -->
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <input id="searchInput" class="search" type="text" placeholder="Search tasks..." aria-label="Search tasks">
+        <div class="stats" id="stats">0 tasks • 0 completed</div>
+      </div>
+
+      <!-- Task list -->
+      <ul id="todoList" aria-live="polite"></ul>
+
+      <div id="emptyState" class="empty" style="display:none;margin-top:12px">No tasks yet. Add your first task!</div>
+    </section>
+  </main>
+
+  <script>
+    /************************************************************************
+     * Enhanced Todo List
+     *
+     * Requirements implemented:
+     * - Add tasks
+     * - Mark tasks completed / uncompleted (visual)
+     * - Remove tasks
+     * - Real-time search filter
+     * - Tasks stored in localStorage as JSON array with unique id, text, completed
+     *
+     * Comments provided for clarity (for Masai submission).
+     ************************************************************************/
+
+    // ==== Constants & DOM refs ====
+    const STORAGE_KEY = 'masai_todos_v1';
+    const taskInput = document.getElementById('taskInput');
+    const addBtn = document.getElementById('addBtn');
+    const todoList = document.getElementById('todoList');
+    const searchInput = document.getElementById('searchInput');
+    const statsEl = document.getElementById('stats');
+    const emptyState = document.getElementById('emptyState');
+    const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+
+    // In-memory tasks array; each task: { id, text, completed }
+    let tasks = [];
+
+    // ==== Helpers ====
+
+    // Generate a simple unique id (ms timestamp + random)
+    function generateId() {
+      return Date.now().toString(36) + '-' + Math.floor(Math.random() * 10000).toString(36);
+    }
+
+    // Save tasks array to localStorage
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    // Load tasks from localStorage into memory
+    function loadTasks() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        // Basic validation: ensure array of objects
+        if (Array.isArray(parsed)) tasks = parsed;
+      } catch (e) {
+        // corruption or parse error: start fresh
+        tasks = [];
+      }
+    }
+
+    // Create a single task DOM element (li) and return it
+    function createTaskElement(task) {
+      const li = document.createElement('li');
+      li.className = 'task' + (task.completed ? ' completed' : '');
+      li.dataset.id = task.id;
+
+      // Checkbox (toggle completed)
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = task.completed;
+      checkbox.title = task.completed ? 'Mark as uncompleted' : 'Mark as completed';
+      checkbox.onclick = function () {
+        toggleTaskCompletion(task.id);
+      };
+
+      // text span
+      const span = document.createElement('div');
+      span.className = 'text';
+      span.textContent = task.text;
+
+      // actions container
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      // delete button
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn delete';
+      delBtn.textContent = 'Delete';
+      delBtn.onclick = function () {
+        deleteTask(task.id);
+      };
+
+      actions.appendChild(delBtn);
+
+      li.appendChild(checkbox);
+      li.appendChild(span);
+      li.appendChild(actions);
+
+      return li;
+    }
+
+    // Render tasks list based on search filter
+    function renderTasks() {
+      const query = searchInput.value.trim().toLowerCase();
+
+      // Clear UI
+      todoList.innerHTML = '';
+
+      // Filter tasks by search query (if query is empty, show all)
+      const filtered = tasks.filter(t => t.text.toLowerCase().includes(query));
+
+      // Update empty state visibility
+      if (filtered.length === 0) {
+        emptyState.style.display = tasks.length === 0 ? '' : 'none';
+      } else {
+        emptyState.style.display = 'none';
+      }
+
+      // Append each matching task
+      filtered.forEach(task => {
+        const el = createTaskElement(task);
+        todoList.appendChild(el);
+      });
+
+      updateStats();
+    }
+
+    // Update stats (total and completed count)
+    function updateStats() {
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.completed).length;
+      statsEl.textContent = `${total} task${total !== 1 ? 's' : ''} • ${completed} completed`;
+    }
+
+    // ==== Actions ====
+
+    // Add a new task (validates non-empty)
+    function addTask() {
+      const raw = taskInput.value;
+      const text = (raw || '').replace(/\s+/g, ' ').trim(); // normalize spaces
+      if (!text) {
+        alert('Please enter a non-empty task.');
+        return;
+      }
+
+      const newTask = {
+        id: generateId(),
+        text,
+        completed: false
+      };
+
+      tasks.push(newTask);
+      saveTasks();
+      renderTasks();
+
+      taskInput.value = '';
+      taskInput.focus();
+    }
+
+    // Toggle completion for task with id
+    function toggleTaskCompletion(id) {
+      const idx = tasks.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      tasks[idx].completed = !tasks[idx].completed;
+      saveTasks();
+      renderTasks();
+    }
+
+    // Delete task
+    function deleteTask(id) {
+      const idx = tasks.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      if (!confirm('Delete this task?')) return;
+      tasks.splice(idx, 1);
+      saveTasks();
+      renderTasks();
+    }
+
+    // Clear all completed tasks
+    function clearCompletedTasks() {
+      const before = tasks.length;
+      tasks = tasks.filter(t => !t.completed);
+      if (tasks.length === before) {
+        alert('No completed tasks to clear.');
+        return;
+      }
+      saveTasks();
+      renderTasks();
+    }
+
+    // ==== Wiring UI events ====
+
+    // Add button (click)
+    addBtn.addEventListener('click', addTask);
+
+    // Enter key on input adds task
+    taskInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+
+    // Real-time search
+    searchInput.addEventListener('input', function () {
+      renderTasks();
+    });
+
+    // Clear completed button
+    clearCompletedBtn.addEventListener('click', clearCompletedTasks);
+
+    // ==== Init ====
+    function init() {
+      loadTasks();
+      renderTasks();
+    }
+
+    // Run on load
+    init();
+
+    // Expose functions for manual testing (optional)
+    window._todo = { addTask, deleteTask, toggleTaskCompletion, saveTasks };
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L0 - Creating and Removing Elements</title>
+    <style>
+        #container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid black;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <!--Buttons-->
+    <button onclick="addParagraph()">Add Paragraph</button>
+    <button onclick="removeParagraph()">Remove Last Paragraph</button>
+
+    <!--Div where paragraphs will be added-->
+    <div id="container"></div>
+</body>
+<script>
+
+    // Function to add a new paragraph
+    function addParagraph() {
+        // Create a new paragraph element
+        const p = document.createElement("p");
+
+        // add text inside the paragraph
+        p.textContent = "This is a new paragraph.";
+
+        //append the paragraph to the container div
+        document.getElementById("container").appendChild(p);
+    }
+
+    // Function to remove the last paragraph
+    function removeParagraph(){
+        const container = document.getElementById("container");
+
+        // Check if there are any child elements to remove
+        if (container.lastChild){
+            container.removeChild(container.lastChild); //Remove the last paragraph
+        } else {
+            alert("No paragraphs to remove!");
+        }
+    }
+</script>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+</head>
+<body>
+    <input type="text" placeholder="Username" id="username">
+    <br><br>
+    <input type="password" placeholder="Password" id="password">
+    <br><br>
+    <button onclick="login()" id="loginBtn">Login</button>
+    
+    <p id="message"></p>
+</body>
+<script>
+    function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+
+        if (u == "" || p == "") {
+            document.getElementById('message').innerText = "Username and Password cannot be empty.";
+            return;
+        }else{
+            //sessionStorage.setItem('username', u);
+            localStorage.setItem('username', u);         
+            window.location.href = 'dashboard.html';
+        }
+    }
+</script>
+</html>

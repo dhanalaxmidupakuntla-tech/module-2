@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Form</h2>
+    <input title="name" type="text" id="name">
+    <button onclick="saveData()">Save</button>
+    <p id="msg"></p>
+    <h2>List</h2>
+    <table border="1" id="dataTable">
+        <thead>
+            <tr>
+                <th>Rollno.</th>
+                <th>Name</th>
+                <th>Actoin</th>
+            </tr>
+        </thead>
+        <tbody id="root"></tbody>
+    </table>
+</body>
+<script>
+    let index = -1;
+    showData();
+
+    function saveData(){
+        const n = document.getElementById('name').value;
+
+        if(n === ''){
+            document.getElementById('msg').innerText = 'Please enter a name';
+            return;
+        }
+
+        let data = JSON.parse(localStorage.getItem('list') || '[]');
+
+        if (index === -1){
+            data.push(n);
+            document.getElementById('msg').innerHTML = "add values";
+        }
+        else{
+            data[index] = n;
+            document.getElementById("msg").innerHTML = "Data updated";
+            index = -1
+        }
+        localStorage.setItem('list', JSON.stringify(data));
+        document.getElementById("name").value = "";
+        showData();
+
+    }
+
+    function showData(){
+        const data = JSON.parse(localStorage.getItem('list') || '[]');
+        let html = '';
+
+        for ( let i = 0; i < data.length; i++){
+            html += `<tr>
+                        <td>${i + 1}</td>
+                        <td>${data[i]}</td>
+                        <td>
+                            <button onclick="editData(${i})">Edit</button>
+                            <button onclick="deleteData(${i})">Delete</button>
+                        </td>
+                    </tr>`;        
+        }
+        document.getElementById("root").innerHTML = html;
+    }
+
+    function editData(i){
+        const data = JSON.parse(localStorage.getItem('list') || '[]');
+        document.getElementById("name").value = data[i];
+        index = i;
+    }
+
+    function deleteData(i){
+        const data = JSON.parse(localStorage.getItem('list') || '[]');
+        data.splice(i, 1);
+        localStorage.setItem('list', JSON.stringify(data));
+        document.getElementById("msg").innerHTML = "Data deleted";
+        showData();
+    }
+</script>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L0 - Save and Load User Notes</title>
+    <style>
+        body{
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        p.lead{
+            color: #475569;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        textarea{
+            width: 100%;
+            min-height: 240px;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            resize: vertical;
+            box-shadow: 0 6px 18px rgba(12, 15, 30, 0.04);
+            background: #fff;
+        }
+        .controls{
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        button{
+            padding: 10px 16px;
+            font-size: 16px;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button.primary{
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <p class="lead">Type your notes below and use the buttons to save, load</p>
+    
+    <!-- Textarea for user notes -->
+    <textarea id="userNotes" rows="10" cols="50" placeholder="Enter your notes here..."></textarea><br>
+
+    <!--Controls-->
+    <div class="controls">
+        <button id="saveBtn" class="primary" onclick="saveNotes()">Save Notes</button>
+        <button id="loadBtn" onclick="loadNotes()">Load Notes</button>
+        <button id="clearBtn" onclick="clearNotes()">Clear Notes</button>
+    </div> 
+</body>
+<script>
+    /*******************************************
+     * Notes saver - localStorage example
+     * 
+     * Key behaviors:
+     * -On page load: automatically check localStoreage and populate textarea if notes exist
+     * -Save Notes: validates (non-empty) and saves notes to localStorage
+     * -Load Notes: reads from localStorage and displays in textarea
+     * -Clear Notes: removes from localStorage and clears textarea
+     * 
+     * clear comments are included for submission.
+     ********************************************/
+
+    // The key used in localStorage to store notes
+    const STORAGE_KEY = 'userNotes';
+
+    const notesTextarea = document.getElementById('userNotes');
+    const saveBtn = document.getElementById('saveBtn');
+    const loadBtn = document.getElementById('loadBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    /**
+     * Saves the notes from the textarea to localStorage
+     * Validates that the textarea is not empty (after trimming whitespace)
+    **/
+
+   function saveNotes() {
+        const notes = notesTextarea.value.trim();
+        if (notes) {
+            localStorage.setItem(STORAGE_KEY, notes);
+            alert('Notes saved successfully!');
+        } else {
+            alert('Cannot save empty notes. Please enter some text.');
+        }
+    }
+
+    function loadNotes() {
+        const savedNotes = localStorage.getItem(STORAGE_KEY);
+        if (savedNotes) {
+            notesTextarea.value = savedNotes;
+            alert('Notes loaded successfully!');
+        } else {
+            alert('No saved notes found.');
+        }
+    }
+
+    function clearNotes() {
+        localStorage.removeItem(STORAGE_KEY);
+        notesTextarea.value = '';
+        alert('Notes cleared successfully!');
+    }
+
+    window.addEventListener('load', () => {
+        const savedNotes = localStorage.getItem(STORAGE_KEY);
+        if (savedNotes) {
+            notesTextarea.value = savedNotes;
+        }
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.ctrlKey || event.metaKey && event.key.toLowerCase() == 's') {
+            event.preventDefault();
+            saveNotes();
+        }
+    });
+</script>
+</html>
